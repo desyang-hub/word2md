@@ -5,11 +5,12 @@
 ## 功能
 
 - 使用 Word 自动化（`pywin32`）批量把 MathType OLE 公式转换为 TeX 文本，替代原 VBA 宏；
+- 反向模式 `--latex2mathtype`：把文档中的 `\[ ... \]`、`$ ... $` LaTeX 文本公式批量转换为 MathType 公式，输出 Word 文档；
 - 先把输入文档复制为当前目录下的 `tmp_<文件名>` 副本再处理，转换结束后自动删除，不修改原始文档；
 - 基于 [MarkItDown](https://github.com/microsoft/markitdown) 完成 `.docx` → Markdown 转换；
 - 公式规范化：
   - `$$$...$` → `$...$`（修复多余 `$`）；
-  - `\[ ... \]` 块级公式 → 独立的 `$$ ... $$` 公式块；
+  - `\[ ... \]` 块级公式保留 `\[ ... \]` 写法并独立成块，便于后续用 `--latex2mathtype` 还原；
   - 单行 `$$...$$` → 独立的 `$$ ... $$` 公式块；
   - 行内 `$...$` 去除 `\_`、`\{`、`\}` 等多余转义；
   - 清理 MathType 注释残留，压缩多余空行；
@@ -21,6 +22,8 @@
 - 注意：PyPI 上的 `markitdown 0.0.1a1` 是不含实现的占位包，请确认安装的是 `>=0.1.0` 版本；
 - MathType 公式转换需要 Windows + Microsoft Word + MathType 插件（`pywin32` 会自动安装）；
 - 在其他系统或已转换过公式时，可加 `--skip-mathtype` 跳过该步骤。
+
+> !tips 注意：VS Code 的原生 Markdown 预览本身无法识别\\[...\\] 块级公式，可以VS Code 扩展市场搜索并安装 Markdown+Math 插件，安装后，它通常开箱即用，因为默认配置可能已经包含了对方括号的支持。如果公式仍未渲染，只需在 VS Code 设置中搜索 mdmath，找到定界符（Delimiters）相关选项，确保其被设置为 brackets 即可。
 
 ## 安装
 
@@ -73,18 +76,36 @@ python word2md.py 论文.docx        # 兼容原脚本的调用方式
 | 参数 | 说明 |
 | --- | --- |
 | `input` | 待转换的 Word 文档路径 |
-| `-o, --output FILE` | 输出 Markdown 路径，默认为 `<输入文件名>_final.md`（当前工作目录） |
+| `-o, --output FILE` | 输出路径，默认 `<输入文件名>_final.md`；反向模式默认 `<输入文件名>_mathtype.docx` |
+| `--latex2mathtype` | 反向模式：把 LaTeX 文本公式转为 MathType 公式，输出 `.docx` |
 | `--skip-mathtype` | 跳过 MathType 公式转换 |
 | `-q, --quiet` | 不输出进度信息 |
 | `-V, --version` | 显示版本号 |
 
+### LaTeX 转 MathType（反向模式）
+
+文档中的公式还是 `\[ ... \]` 或 `$ ... $` 文本时，可反向批量转换为 MathType 公式：
+
+```powershell
+word2md 论文.docx --latex2mathtype                   # 输出 论文_mathtype.docx
+word2md 论文.docx --latex2mathtype -o out/论文.docx  # 指定输出路径
+```
+
+流程与正向一致：复制 `tmp_论文.docx` → 扫描并转换公式 → 另存为输出文件 → 删除临时副本。配合正向转换输出的 `\[ ... \]`，可以在 Markdown 与 Word/MathType 之间往返。
+
 ### Python API
 
 ```python
-from word2md import convert_docx, convert_mathtype, fix_math
+from word2md import (
+    convert_docx,
+    convert_latex_to_mathtype,
+    convert_mathtype,
+    fix_math,
+)
 
-convert_mathtype(".tmp/论文.docx")          # 返回 (成功数量, 失败数量)
-convert_docx(".tmp/论文.docx", "论文.md")
+convert_latex_to_mathtype("tmp_论文.docx")  # 返回 (匹配, 成功, 失败) 数量，原地保存
+convert_mathtype("tmp_论文.docx")           # 返回 (成功, 失败) 数量，原地保存
+convert_docx("tmp_论文.docx", "论文.md")
 
 text = fix_math(r"$a\_b$")  # "$a_b$"
 ```
@@ -94,15 +115,16 @@ text = fix_math(r"$a\_b$")  # "$a_b$"
 ```text
 word2md/
 ├── word2md/
-│   ├── __init__.py     # 包入口，导出 convert_docx / convert_mathtype / fix_math / __version__
+│   ├── __init__.py     # 包入口，导出 convert_docx / convert_latex_to_mathtype / convert_mathtype / fix_math
 │   ├── __main__.py     # 支持 python -m word2md
 │   ├── cli.py          # 命令行参数解析与入口（复制 tmp_ 副本、调度各步骤、清理副本）
-│   ├── mathtype.py     # Word 自动化批量转换 MathType 公式为 TeX
+│   ├── mathtype.py     # Word 自动化双向转换（LaTeX 文本 ↔ MathType 公式）
 │   ├── converter.py    # MarkItDown 转换流程
 │   └── mathfix.py      # LaTeX 公式修复（与原脚本逻辑一致）
 ├── word2md.py          # 兼容入口，等价于 word2md 命令
 ├── tests/
 │   ├── test_cli.py
+│   ├── test_latex.py
 │   └── test_mathfix.py
 ├── pyproject.toml
 ├── requirements.txt

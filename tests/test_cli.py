@@ -68,6 +68,39 @@ def test_cli_removes_tmp_copy_on_error(tmp_path, monkeypatch, capsys):
     assert not (tmp_path / "tmp_a.docx").exists()
 
 
+def test_cli_latex2mathtype_mode(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "a.docx").write_bytes(b"docx")
+
+    calls = {}
+
+    def fake(path, *, quiet=False):
+        calls["path"] = Path(path)
+        Path(path).write_bytes(b"converted")
+        return 5, 4, 1
+
+    monkeypatch.setattr(cli, "convert_latex_to_mathtype", fake)
+
+    assert cli.main(["--latex2mathtype", "a.docx"]) == 0
+
+    assert calls["path"] == Path("tmp_a.docx")
+    assert (tmp_path / "a_mathtype.docx").read_bytes() == b"converted"
+    assert not (tmp_path / "tmp_a.docx").exists()
+
+
+def test_cli_latex2mathtype_custom_output(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "a.docx").write_bytes(b"docx")
+
+    monkeypatch.setattr(
+        cli, "convert_latex_to_mathtype", lambda path, *, quiet=False: (1, 1, 0)
+    )
+
+    assert cli.main(["--latex2mathtype", "a.docx", "-o", "out/b.docx"]) == 0
+    assert (tmp_path / "out" / "b.docx").exists()
+    assert not (tmp_path / "tmp_a.docx").exists()
+
+
 def test_cli_missing_input(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
 

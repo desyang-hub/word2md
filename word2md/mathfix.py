@@ -21,11 +21,13 @@ def fix_math(text: str) -> str:
     def fix_display(match):
         content = match.group(1)
         content = content.replace('\\_', '_')
-        content = content.replace('\\{', '{')
-        content = content.replace('\\}', '}')
+        # content = content.replace('\\{', '{')
+        content = content.replace('\\*', '*')
+        # content = content.replace('\\}', '}')
         content = content.replace('\\^', '^')
         content = content.strip()
-        return '\n$$\n' + content + '\n$$\n'
+        # return '\n$$\n' + content + '\n$$\n'
+        return '\n\\[\n' + content + '\n\\]\n'
 
     text = re.sub(r'\\\[\s*(.*?)\s*\\\]', fix_display, text, flags=re.DOTALL)
 

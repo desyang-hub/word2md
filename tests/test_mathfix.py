@@ -8,7 +8,7 @@ def test_inline_formula_unescaped():
 
 
 def test_display_formula_from_brackets():
-    assert fix_math("\\[\nE = mc^2\n\\]") == "\n$$\nE = mc^2\n$$\n"
+    assert fix_math("\\[\nE = mc^2\n\\]") == "\n\\[\nE = mc^2\n\\]\n"
 
 
 def test_display_formula_single_line():

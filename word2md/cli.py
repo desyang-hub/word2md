@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import __version__
 from .converter import convert_docx
-from .mathtype import convert_mathtype
+from .mathtype import convert_latex_to_mathtype, convert_mathtype
 
 __all__ = ["main"]
 
@@ -23,6 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "将 Word 文档转换为 Markdown：先复制为当前目录下的 tmp_ 前缀副本并批量转换 "
             "MathType 公式，再转换为 Markdown、修复 LaTeX 公式，最后删除副本。"
+            "加 --latex2mathtype 可反向把文档中的 LaTeX 文本公式转为 MathType 公式。"
         ),
     )
     parser.add_argument("input", type=Path, help="待转换的 Word 文档路径")
@@ -31,7 +32,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         metavar="FILE",
-        help="输出 Markdown 路径（默认与输入文件名同名的 _final.md）",
+        help=(
+            "输出路径（默认 <输入文件名>_final.md；--latex2mathtype 模式下"
+            "默认 <输入文件名>_mathtype.docx）"
+        ),
+    )
+    parser.add_argument(
+        "--latex2mathtype",
+        action="store_true",
+        help="反向模式：把文档中的 LaTeX 文本公式（\\[...\\]、$...$）转换为 MathType 公式",
     )
     parser.add_argument(
         "--skip-mathtype",
@@ -47,15 +56,46 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _latex_to_mathtype(args: argparse.Namespace, working: Path, target: Path) -> int:
+    """LaTeX 文本公式 → MathType 公式，结果另存为 Word 文档。"""
+    if not args.quiet:
+        print(f"[1/2] 已复制到 {working}")
+        print("[2/2] LaTeX 公式转 MathType...")
+
+    try:
+        matched, ok, fail = convert_latex_to_mathtype(working, quiet=args.quiet)
+    except Exception as exc:
+        print(f"错误: LaTeX 转 MathType 失败: {exc}", file=sys.stderr)
+        return 1
+
+    if not args.quiet:
+        print(f"  匹配 {matched} 个，成功 {ok} 个，失败 {fail} 个")
+
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(working, target)
+    except OSError as exc:
+        print(f"错误: 写入 {target} 失败: {exc}", file=sys.stderr)
+        return 1
+
+    if not args.quiet:
+        print(f"[完成] {target}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """执行命令行程序，返回进程退出码。"""
     args = build_parser().parse_args(argv)
     source: Path = args.input
-    target: Path = args.output or Path(source.stem + "_final.md")
 
     if not source.is_file():
         print(f"错误: 输入文件不存在: {source}", file=sys.stderr)
         return 1
+
+    if args.latex2mathtype:
+        target = args.output or Path(source.stem + "_mathtype.docx")
+    else:
+        target = args.output or Path(source.stem + "_final.md")
 
     # 复制为当前目录下的 tmp_ 副本再处理，避免改动原始文档
     working = Path(TMP_PREFIX + source.name)
@@ -68,6 +108,9 @@ def main(argv: list[str] | None = None) -> int:
         except OSError as exc:
             print(f"错误: 复制到 {working} 失败: {exc}", file=sys.stderr)
             return 1
+
+        if args.latex2mathtype:
+            return _latex_to_mathtype(args, working, target)
 
         if not args.quiet:
             print(f"[1/3] 已复制到 {working}")
