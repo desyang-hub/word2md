@@ -1,2 +1,4 @@
 # 运行依赖（安装项目本身请执行：pip install .）
 markitdown[docx]>=0.1.0
+tqdm>=4.60
+pywin32>=305; sys_platform == "win32"

@@ -16,6 +16,9 @@ env/
 .coverage
 htmlcov/
 
+# 中间文件
+.tmp/
+
 # 编辑器
 .idea/
 .vscode/

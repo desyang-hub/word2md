@@ -15,7 +15,11 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: Markdown",
     "Operating System :: OS Independent",
 ]
-dependencies = ["markitdown[docx]>=0.1.0"]
+dependencies = [
+    "markitdown[docx]>=0.1.0",
+    "tqdm>=4.60",
+    "pywin32>=305; sys_platform == 'win32'",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
