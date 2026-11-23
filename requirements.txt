@@ -1,0 +1,2 @@
+# 运行依赖（安装项目本身请执行：pip install .）
+markitdown[docx]>=0.1.0

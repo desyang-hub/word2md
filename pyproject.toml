@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "word2md"
+version = "0.1.0"
+description = "将 Word 文档转换为 Markdown，并修复其中的 LaTeX 公式"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "desyang", email = "desyang@qq.com" }]
+keywords = ["word", "docx", "markdown", "math", "mathtype", "latex"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Operating System :: OS Independent",
+]
+dependencies = ["markitdown[docx]>=0.1.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+word2md = "word2md.cli:main"
+
+[tool.setuptools]
+packages = ["word2md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
