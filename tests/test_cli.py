@@ -96,7 +96,7 @@ def test_cli_latex2mathtype_custom_output(tmp_path, monkeypatch):
         cli, "convert_latex_to_mathtype", lambda path, *, quiet=False: (1, 1, 0)
     )
 
-    assert cli.main(["--latex2mathtype", "a.docx", "-o", "out/b.docx"]) == 0
+    assert cli.main(["-l", "a.docx", "-o", "out/b.docx"]) == 0
     assert (tmp_path / "out" / "b.docx").exists()
     assert not (tmp_path / "tmp_a.docx").exists()
 

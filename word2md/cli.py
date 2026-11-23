@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "将 Word 文档转换为 Markdown：先复制为当前目录下的 tmp_ 前缀副本并批量转换 "
             "MathType 公式，再转换为 Markdown、修复 LaTeX 公式，最后删除副本。"
-            "加 --latex2mathtype 可反向把文档中的 LaTeX 文本公式转为 MathType 公式。"
+            "加 -l/--latex2mathtype 可反向把文档中的 LaTeX 文本公式转为 MathType 公式。"
         ),
     )
     parser.add_argument("input", type=Path, help="待转换的 Word 文档路径")
@@ -38,6 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "-l",
         "--latex2mathtype",
         action="store_true",
         help="反向模式：把文档中的 LaTeX 文本公式（\\[...\\]、$...$）转换为 MathType 公式",

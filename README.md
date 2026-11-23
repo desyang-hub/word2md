@@ -77,7 +77,7 @@ python word2md.py 论文.docx        # 兼容原脚本的调用方式
 | --- | --- |
 | `input` | 待转换的 Word 文档路径 |
 | `-o, --output FILE` | 输出路径，默认 `<输入文件名>_final.md`；反向模式默认 `<输入文件名>_mathtype.docx` |
-| `--latex2mathtype` | 反向模式：把 LaTeX 文本公式转为 MathType 公式，输出 `.docx` |
+| `-l, --latex2mathtype` | 反向模式：把 LaTeX 文本公式转为 MathType 公式，输出 `.docx` |
 | `--skip-mathtype` | 跳过 MathType 公式转换 |
 | `-q, --quiet` | 不输出进度信息 |
 | `-V, --version` | 显示版本号 |
@@ -87,8 +87,8 @@ python word2md.py 论文.docx        # 兼容原脚本的调用方式
 文档中的公式还是 `\[ ... \]` 或 `$ ... $` 文本时，可反向批量转换为 MathType 公式：
 
 ```powershell
-word2md 论文.docx --latex2mathtype                   # 输出 论文_mathtype.docx
-word2md 论文.docx --latex2mathtype -o out/论文.docx  # 指定输出路径
+word2md 论文.docx -l                        # 输出 论文_mathtype.docx
+word2md 论文.docx -l -o out/论文.docx       # 指定输出路径
 ```
 
 流程与正向一致：复制 `tmp_论文.docx` → 扫描并转换公式 → 另存为输出文件 → 删除临时副本。配合正向转换输出的 `\[ ... \]`，可以在 Markdown 与 Word/MathType 之间往返。
