@@ -1,6 +1,6 @@
 ## 使用VBA宏，将所有MathType公式转换为TeX格式
 
-### 进入word, 使用Alt+F11 打开VBA编辑器，输入以下代码，保存为宏，运行宏即可
+### 进入word, 使用Alt+F11 打开VBA编辑器，插入模块，输入以下代码，保存为宏，运行宏即可
 ```
 Sub ConvertAllMathTypeToTeX()
     Dim i As Integer
