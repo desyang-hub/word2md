@@ -5,7 +5,7 @@
 ## 功能
 
 - 使用 Word 自动化（`pywin32`）批量把 MathType OLE 公式转换为 TeX 文本，替代原 VBA 宏；
-- 先把输入文档复制到当前目录的 `.tmp/` 下再处理，不修改原始文档；
+- 先把输入文档复制为当前目录下的 `tmp_<文件名>` 副本再处理，转换结束后自动删除，不修改原始文档；
 - 基于 [MarkItDown](https://github.com/microsoft/markitdown) 完成 `.docx` → Markdown 转换；
 - 公式规范化：
   - `$$$...$` → `$...$`（修复多余 `$`）；
@@ -52,11 +52,12 @@ word2md --version
 
 执行 `word2md 论文.docx` 时会依次：
 
-1. 把输入文件复制到当前目录的 `.tmp/论文.docx`；
-2. 在 `.tmp` 副本上用 Word 自动化把 MathType 公式批量转为 TeX（不修改原文件）；
-3. 用 MarkItDown 把副本转成 Markdown，并修复 LaTeX 公式。
+1. 把输入文件复制到当前目录下的 `tmp_论文.docx`；
+2. 在 `tmp_` 副本上用 Word 自动化把 MathType 公式批量转为 TeX（不修改原文件）；
+3. 用 MarkItDown 把副本转成 Markdown，并修复 LaTeX 公式；
+4. 删除 `tmp_论文.docx` 临时副本（转换失败时同样会删除）。
 
-> `.tmp/` 中的副本会保留，便于排查问题；MathType 步骤失败时会给出警告并继续后续转换。
+> MathType 步骤失败时会给出警告并继续后续转换。
 
 ### 命令
 
@@ -95,7 +96,7 @@ word2md/
 ├── word2md/
 │   ├── __init__.py     # 包入口，导出 convert_docx / convert_mathtype / fix_math / __version__
 │   ├── __main__.py     # 支持 python -m word2md
-│   ├── cli.py          # 命令行参数解析与入口（复制到 .tmp、调度各步骤）
+│   ├── cli.py          # 命令行参数解析与入口（复制 tmp_ 副本、调度各步骤、清理副本）
 │   ├── mathtype.py     # Word 自动化批量转换 MathType 公式为 TeX
 │   ├── converter.py    # MarkItDown 转换流程
 │   └── mathfix.py      # LaTeX 公式修复（与原脚本逻辑一致）

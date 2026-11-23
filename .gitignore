@@ -17,7 +17,7 @@ env/
 htmlcov/
 
 # 中间文件
-.tmp/
+tmp_*
 
 # 编辑器
 .idea/

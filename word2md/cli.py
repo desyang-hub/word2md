@@ -13,7 +13,7 @@ from .mathtype import convert_mathtype
 
 __all__ = ["main"]
 
-TMP_DIR_NAME = ".tmp"
+TMP_PREFIX = "tmp_"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -21,8 +21,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="word2md",
         description=(
-            "将 Word 文档转换为 Markdown：先复制到 .tmp 目录并批量转换 MathType 公式，"
-            "再转换为 Markdown 并修复 LaTeX 公式。"
+            "将 Word 文档转换为 Markdown：先复制为当前目录下的 tmp_ 前缀副本并批量转换 "
+            "MathType 公式，再转换为 Markdown、修复 LaTeX 公式，最后删除副本。"
         ),
     )
     parser.add_argument("input", type=Path, help="待转换的 Word 文档路径")
@@ -57,43 +57,49 @@ def main(argv: list[str] | None = None) -> int:
         print(f"错误: 输入文件不存在: {source}", file=sys.stderr)
         return 1
 
-    # 复制到 .tmp 后再处理，避免改动原始文档
-    working = Path(TMP_DIR_NAME) / source.name
+    # 复制为当前目录下的 tmp_ 副本再处理，避免改动原始文档
+    working = Path(TMP_PREFIX + source.name)
+    temp_is_source = working.resolve() == source.resolve()
+
     try:
-        working.parent.mkdir(exist_ok=True)
-        if working.resolve() != source.resolve():
-            shutil.copy2(source, working)
-    except OSError as exc:
-        print(f"错误: 复制到 {working} 失败: {exc}", file=sys.stderr)
-        return 1
-
-    if not args.quiet:
-        print(f"[1/3] 已复制到 {working}")
-
-    if args.skip_mathtype:
-        if not args.quiet:
-            print("[2/3] 跳过 MathType 转换")
-    else:
-        if not args.quiet:
-            print("[2/3] MathType 公式转换...")
         try:
-            ok, fail = convert_mathtype(working, quiet=args.quiet)
+            if not temp_is_source:
+                shutil.copy2(source, working)
+        except OSError as exc:
+            print(f"错误: 复制到 {working} 失败: {exc}", file=sys.stderr)
+            return 1
+
+        if not args.quiet:
+            print(f"[1/3] 已复制到 {working}")
+
+        if args.skip_mathtype:
             if not args.quiet:
-                print(f"  成功 {ok} 个，失败 {fail} 个")
-        except Exception as exc:  # 公式转换失败时仍继续后续转换
-            print(f"警告: MathType 转换失败，继续后续步骤: {exc}", file=sys.stderr)
+                print("[2/3] 跳过 MathType 转换")
+        else:
+            if not args.quiet:
+                print("[2/3] MathType 公式转换...")
+            try:
+                ok, fail = convert_mathtype(working, quiet=args.quiet)
+                if not args.quiet:
+                    print(f"  成功 {ok} 个，失败 {fail} 个")
+            except Exception as exc:  # 公式转换失败时仍继续后续转换
+                print(f"警告: MathType 转换失败，继续后续步骤: {exc}", file=sys.stderr)
 
-    if not args.quiet:
-        print("[3/3] 转换为 Markdown...")
-    try:
-        convert_docx(working, target)
-    except FileNotFoundError as exc:
-        print(f"错误: {exc}", file=sys.stderr)
-        return 1
-    except OSError as exc:
-        print(f"错误: 写入 {target} 失败: {exc}", file=sys.stderr)
-        return 1
+        if not args.quiet:
+            print("[3/3] 转换为 Markdown...")
+        try:
+            convert_docx(working, target)
+        except OSError as exc:
+            print(f"错误: 转换为 {target} 失败: {exc}", file=sys.stderr)
+            return 1
 
-    if not args.quiet:
-        print(f"[完成] {target}")
-    return 0
+        if not args.quiet:
+            print(f"[完成] {target}")
+        return 0
+    finally:
+        # 转换结束（无论成功与否）删除临时的 tmp_ 副本
+        if not temp_is_source:
+            try:
+                working.unlink(missing_ok=True)
+            except OSError as exc:
+                print(f"警告: 删除临时文件 {working} 失败: {exc}", file=sys.stderr)
