@@ -51,16 +51,17 @@ MathType 公式默认以 OLE 对象形式存在，先按 [VBA_script.md](VBA_scr
 ### 2. 转换文档
 
 ```powershell
-word2md 论文.docx                  # 输出同目录的 论文.md
+word2md 论文.docx                  # 输出 论文_final.md（与原脚本默认一致）
 word2md 论文.docx -o out/论文.md   # 指定输出路径（目录不存在会自动创建）
 word2md 论文.docx -q               # 静默模式
 python -m word2md 论文.docx        # 未加入 PATH 时也可用模块方式运行
+python word2md.py 论文.docx        # 兼容原脚本的调用方式
 ```
 
 | 参数 | 说明 |
 | --- | --- |
 | `input` | 待转换的 Word 文档路径 |
-| `-o, --output FILE` | 输出 Markdown 路径，默认与输入文件同目录、同名的 `.md` 文件 |
+| `-o, --output FILE` | 输出 Markdown 路径，默认为 `<输入文件名>_final.md`（当前工作目录） |
 | `-q, --quiet` | 不输出进度信息 |
 | `-V, --version` | 显示版本号 |
 
@@ -83,7 +84,8 @@ word2md/
 │   ├── __main__.py     # 支持 python -m word2md
 │   ├── cli.py          # 命令行参数解析与入口
 │   ├── converter.py    # MarkItDown 转换流程
-│   └── mathfix.py      # LaTeX 公式修复
+│   └── mathfix.py      # LaTeX 公式修复（与原脚本逻辑一致）
+├── word2md.py          # 兼容入口，等价于 word2md 命令
 ├── tests/
 │   └── test_mathfix.py
 ├── pyproject.toml

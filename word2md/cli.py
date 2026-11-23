@@ -24,7 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         metavar="FILE",
-        help="输出 Markdown 路径（默认与输入文件同目录、同名的 .md 文件）",
+        help="输出 Markdown 路径（默认与输入文件名同名的 _final.md）",
     )
     parser.add_argument(
         "-q", "--quiet", action="store_true", help="静默模式，不输出进度信息"
@@ -39,10 +39,10 @@ def main(argv: list[str] | None = None) -> int:
     """执行命令行程序，返回进程退出码。"""
     args = build_parser().parse_args(argv)
     source: Path = args.input
-    target: Path = args.output or source.with_suffix(".md")
+    target: Path = args.output or Path(source.stem + "_final.md")
 
     if not args.quiet:
-        print(f"[1/2] 正在转换 {source} ...")
+        print("[1/2] markitdown 转换...")
 
     try:
         convert_docx(source, target)
@@ -54,5 +54,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if not args.quiet:
-        print(f"[2/2] 已生成 {target}")
+        print("[2/2] 修复公式...")
+        print(f"[完成] {target}")
     return 0
