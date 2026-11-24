@@ -6,7 +6,7 @@
 
 - 使用 Word 自动化（`pywin32`）批量把 MathType OLE 公式转换为 TeX 文本，替代原 VBA 宏；
 - 反向模式 `--latex2mathtype`：把文档中的 `\[ ... \]`、`$ ... $` LaTeX 文本公式批量转换为 MathType 公式，输出 Word 文档；
-- 先把输入文档复制为当前目录下的 `tmp_<文件名>` 副本再处理，转换结束后自动删除，不修改原始文档；
+- 先把输入文档复制为当前目录下的 `tmp_<文件名>` 副本再处理，不修改原始文档；默认保留副本，加 `-d/--delete` 时在结束后删除；
 - 基于 [MarkItDown](https://github.com/microsoft/markitdown) 完成 `.docx` → Markdown 转换；
 - 公式规范化：
   - `$$$...$` → `$...$`（修复多余 `$`）；
@@ -58,7 +58,7 @@ word2md --version
 1. 把输入文件复制到当前目录下的 `tmp_论文.docx`；
 2. 在 `tmp_` 副本上用 Word 自动化把 MathType 公式批量转为 TeX（不修改原文件）；
 3. 用 MarkItDown 把副本转成 Markdown，并修复 LaTeX 公式；
-4. 删除 `tmp_论文.docx` 临时副本（转换失败时同样会删除）。
+4. 默认保留 `tmp_论文.docx` 副本；加 `-d/--delete` 时删除（转换失败时同样删除）。
 
 > MathType 步骤失败时会给出警告并继续后续转换。
 
@@ -68,6 +68,7 @@ word2md --version
 word2md 论文.docx                  # 输出 论文_final.md（与原脚本默认一致）
 word2md 论文.docx -o out/论文.md   # 指定输出路径（目录不存在会自动创建）
 word2md 论文.docx --skip-mathtype  # 跳过 MathType 转换（非 Windows 或已转换过公式）
+word2md 论文.docx -d               # 转换结束后删除 tmp_ 副本
 word2md 论文.docx -q               # 静默模式
 python -m word2md 论文.docx        # 未加入 PATH 时也可用模块方式运行
 python word2md.py 论文.docx        # 兼容原脚本的调用方式
@@ -79,6 +80,7 @@ python word2md.py 论文.docx        # 兼容原脚本的调用方式
 | `-o, --output FILE` | 输出路径，默认 `<输入文件名>_final.md`；反向模式默认 `<输入文件名>_mathtype.docx` |
 | `-l, --latex2mathtype` | 反向模式：把 LaTeX 文本公式转为 MathType 公式，输出 `.docx` |
 | `--skip-mathtype` | 跳过 MathType 公式转换 |
+| `-d, --delete` | 转换结束后删除 `tmp_` 中间文件（默认保留） |
 | `-q, --quiet` | 不输出进度信息 |
 | `-V, --version` | 显示版本号 |
 
@@ -91,7 +93,7 @@ word2md 论文.docx -l                        # 输出 论文_mathtype.docx
 word2md 论文.docx -l -o out/论文.docx       # 指定输出路径
 ```
 
-流程与正向一致：复制 `tmp_论文.docx` → 扫描并转换公式 → 另存为输出文件 → 删除临时副本。配合正向转换输出的 `\[ ... \]`，可以在 Markdown 与 Word/MathType 之间往返。
+流程与正向一致：复制 `tmp_论文.docx` → 扫描并转换公式 → 另存为输出文件（默认保留 `tmp_` 副本，加 `-d` 删除）。配合正向转换输出的 `\[ ... \]`，可以在 Markdown 与 Word/MathType 之间往返。
 
 ### Python API
 

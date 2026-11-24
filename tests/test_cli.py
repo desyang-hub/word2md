@@ -30,8 +30,8 @@ def test_cli_converts_tmp_copy(tmp_path, monkeypatch):
     assert calls["existed"] is True
     assert calls["convert"] == (Path("tmp_论文.docx"), Path("论文_final.md"))
     assert (tmp_path / "论文_final.md").read_text(encoding="utf-8") == "markdown"
-    # 转换结束后删除临时副本
-    assert not (tmp_path / "tmp_论文.docx").exists()
+    # 默认保留临时副本
+    assert (tmp_path / "tmp_论文.docx").read_bytes() == b"fake docx"
     # 原文件保持不变
     assert (tmp_path / "论文.docx").read_bytes() == b"fake docx"
 
@@ -49,12 +49,12 @@ def test_cli_skip_mathtype(tmp_path, monkeypatch):
     monkeypatch.setattr(cli, "convert_mathtype", fake_mathtype)
     monkeypatch.setattr(cli, "convert_docx", lambda path, output: Path(output))
 
-    assert cli.main(["--skip-mathtype", "a.docx"]) == 0
+    assert cli.main(["-d", "--skip-mathtype", "a.docx"]) == 0
     assert calls["mathtype"] is False
     assert not (tmp_path / "tmp_a.docx").exists()
 
 
-def test_cli_removes_tmp_copy_on_error(tmp_path, monkeypatch, capsys):
+def test_cli_deletes_tmp_copy_on_error(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "a.docx").write_bytes(b"x")
 
@@ -63,7 +63,7 @@ def test_cli_removes_tmp_copy_on_error(tmp_path, monkeypatch, capsys):
 
     monkeypatch.setattr(cli, "convert_docx", fake_convert)
 
-    assert cli.main(["--skip-mathtype", "a.docx"]) == 1
+    assert cli.main(["-d", "--skip-mathtype", "a.docx"]) == 1
     assert "disk full" in capsys.readouterr().err
     assert not (tmp_path / "tmp_a.docx").exists()
 
@@ -85,7 +85,8 @@ def test_cli_latex2mathtype_mode(tmp_path, monkeypatch):
 
     assert calls["path"] == Path("tmp_a.docx")
     assert (tmp_path / "a_mathtype.docx").read_bytes() == b"converted"
-    assert not (tmp_path / "tmp_a.docx").exists()
+    # 默认保留临时副本
+    assert (tmp_path / "tmp_a.docx").exists()
 
 
 def test_cli_latex2mathtype_custom_output(tmp_path, monkeypatch):
@@ -96,7 +97,7 @@ def test_cli_latex2mathtype_custom_output(tmp_path, monkeypatch):
         cli, "convert_latex_to_mathtype", lambda path, *, quiet=False: (1, 1, 0)
     )
 
-    assert cli.main(["-l", "a.docx", "-o", "out/b.docx"]) == 0
+    assert cli.main(["-l", "-d", "a.docx", "-o", "out/b.docx"]) == 0
     assert (tmp_path / "out" / "b.docx").exists()
     assert not (tmp_path / "tmp_a.docx").exists()
 

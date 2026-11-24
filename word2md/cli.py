@@ -22,7 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="word2md",
         description=(
             "将 Word 文档转换为 Markdown：先复制为当前目录下的 tmp_ 前缀副本并批量转换 "
-            "MathType 公式，再转换为 Markdown、修复 LaTeX 公式，最后删除副本。"
+            "MathType 公式，再转换为 Markdown、修复 LaTeX 公式。"
+            "默认保留 tmp_ 副本，加 -d/--delete 可在结束后删除。"
             "加 -l/--latex2mathtype 可反向把文档中的 LaTeX 文本公式转为 MathType 公式。"
         ),
     )
@@ -47,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--skip-mathtype",
         action="store_true",
         help="跳过 MathType 公式转换（用于非 Windows 环境或公式已转换过的文档）",
+    )
+    parser.add_argument(
+        "-d",
+        "--delete",
+        action="store_true",
+        help="转换结束后删除 tmp_ 中间文件（默认保留）",
     )
     parser.add_argument(
         "-q", "--quiet", action="store_true", help="静默模式，不输出进度信息"
@@ -141,8 +148,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[完成] {target}")
         return 0
     finally:
-        # 转换结束（无论成功与否）删除临时的 tmp_ 副本
-        if not temp_is_source:
+        # 加 -d/--delete 时，转换结束（无论成功与否）删除临时的 tmp_ 副本
+        if args.delete and not temp_is_source:
             try:
                 working.unlink(missing_ok=True)
             except OSError as exc:
